@@ -1,24 +1,121 @@
-<!DOCTYPE html>
-<html lang="vi">
+<!DOCTYPE HTML><html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Đăng nhập là mất acc</title>
-<link rel="stylesheet" href="../css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --neon-red: #ff0000; --neon-gold: #ffcc00; --cyber-bg: #050505;
+      --panel-border: #333; --glow: 0 0 15px rgba(255, 0, 0, 0.5);
+    }
+    body {
+      background-color: var(--cyber-bg); color: #fff; font-family: 'Courier New', Courier, monospace;
+      margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;
+    }
+    /* Khung viền cơ khí */
+    .mech-frame {
+      border: 4px solid var(--panel-border); border-radius: 15px; background: #111;
+      padding: 20px; width: 90%; max-width: 450px; position: relative;
+      box-shadow: inset 0 0 20px #000, 0 10px 30px rgba(0,0,0,1);
+    }
+    .mech-frame::before {
+      content: "SYSTEM STATUS: ACTIVE"; position: absolute; top: -12px; left: 20px;
+      background: #111; padding: 0 10px; color: var(--neon-gold); font-size: 10px; border: 1px solid var(--panel-border);
+    }
+
+    /* Màn hình Radar & Lá cờ */
+    .radar-container {
+      width: 120px; height: 120px; border-radius: 50%; border: 2px solid #222;
+      margin: 20px auto; position: relative; overflow: hidden;
+      background: radial-gradient(circle, #1a0000 0%, #000 100%);
+    }
+    .radar-sweep {
+      width: 100%; height: 100%; position: absolute;
+      background: conic-gradient(from 0deg, rgba(255,0,0,0.4) 0deg, transparent 90deg);
+      animation: sweep 4s linear infinite;
+    }
+    @keyframes sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .flag-center {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-size: 50px; z-index: 2; filter: drop-shadow(0 0 10px var(--neon-red));
+    }
+
+    /* Đèn báo tín hiệu */
+    .led-indicators { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+    .led { width: 10px; height: 10px; border-radius: 50%; background: #333; }
+    .led.active { background: var(--neon-red); box-shadow: 0 0 10px var(--neon-red); animation: blink 0.5s infinite alternate; }
+    @keyframes blink { from { opacity: 0.3; } to { opacity: 1; } }
+
+    /* Thanh điều khiển Volume-style */
+    .control-label { font-size: 12px; color: var(--neon-gold); text-align: left; margin-bottom: 5px; }
+    .slider-container { background: #000; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #222; }
+    .cyber-slider {
+      -webkit-appearance: none; width: 100%; height: 4px; background: #333; outline: none;
+    }
+    .cyber-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 20px; height: 30px; background: var(--neon-red);
+      border: 2px solid var(--neon-gold); cursor: pointer; clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+    }
+
+    /* Nút bấm kiểu công tắc */
+    .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .btn-mech {
+      background: linear-gradient(180deg, #222, #111); border: 1px solid var(--panel-border);
+      color: #aaa; padding: 15px; border-radius: 5px; cursor: pointer; font-size: 11px;
+      text-transform: uppercase; transition: 0.2s; position: relative;
+    }
+    .btn-mech:hover { color: var(--neon-gold); border-color: var(--neon-gold); }
+    .btn-mech:active { transform: scale(0.95); background: #000; }
+    .btn-mech.on { color: var(--neon-red); border-color: var(--neon-red); box-shadow: inset 0 0 10px rgba(255,0,0,0.2); }
+
+    /* Màn hình phụ log dữ liệu */
+    .console-log {
+      background: #000; border: 1px solid #222; height: 60px; margin-top: 20px;
+      padding: 10px; font-size: 9px; color: #0f0; text-align: left; overflow: hidden;
+    }
+  </style>
 </head>
 <body>
 
-<div class="box">
-  <h2>Đăng nhập là mất acc</h2>
-  <h3> dám đăng nhập ko</h3>
+  <div class="mech-frame">
+    <div class="radar-container">
+      <div class="radar-sweep"></div>
+      <div class="flag-center">🇻🇳</div>
+    </div>
 
-  <input id="user" placeholder="Tên đăng nhập">
-  <input id="pass" type="password" placeholder="Mật khẩu">
+    <div class="led-indicators">
+      <div class="led active"></div><div class="led"></div><div class="led active"></div><div class="led"></div>
+    </div>
 
-  <button onclick="login()">Đăng nhập bằng tài khoản ngân hàng nha</button>
+    <h2 style="color: var(--neon-red); text-shadow: var(--glow); margin: 0;">COMMAND CENTER</h2>
+    <p style="font-size: 10px; color: #666;">DEVICE: ESP32-POWERED UNIT</p>
 
-  <p id="msg"></p>
-</div>
+    <div class="slider-container">
+      <div class="control-label">BRIGHTNESS OUTPUT: <span id="val">128</span></div>
+      <input type="range" min="0" max="255" value="128" class="cyber-slider" oninput="update(this.value)">
+    </div>
 
-<script src="../js/app.js"></script>
+    <div class="grid-buttons">
+      <button class="btn-mech on" onclick="this.classList.toggle('on')">Sấm Sét</button>
+      <button class="btn-mech" onclick="this.classList.toggle('on')">Nhịp Thở</button>
+      <button class="btn-mech" onclick="this.classList.toggle('on')">Cảnh Sát</button>
+      <button class="btn-mech" onclick="this.classList.toggle('on')">Cứu Thương</button>
+      <button class="btn-mech" style="grid-column: span 2; color: var(--neon-gold);" onclick="alert('System Resetting...')">RESET ALL MODULES</button>
+    </div>
+
+    <div class="console-log" id="log">
+      > Initializing system... [OK]<br>
+      > Connect to ESP32... [STABLE]<br>
+      > Signal Strength: -65dBm
+    </div>
+  </div>
+
+  <script>
+    function update(v) {
+      document.getElementById('val').innerHTML = v;
+      let log = document.getElementById('log');
+      log.innerHTML += "<br>> Power level adjusted to: " + v;
+      log.scrollTop = log.scrollHeight;
+    }
+  </script>
 </body>
 </html>
